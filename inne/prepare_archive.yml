@@ -1,0 +1,39 @@
+---
+- name: prepare zip
+  hosts: localhost
+  gather_facts: no
+  tasks:
+    - name: Remove old file
+      ansible.builtin.file:
+        path: ~/Documents/GitHub/maxdevhd/inne/mas-classes.zip
+        state: absent
+    - name: Create a zip archive
+      community.general.archive:
+        path: ~/Documents/GitHub/maxdevhd/*
+        exclude_path:
+        - ~/Documents/GitHub/maxdevhd/inne
+        format: zip
+        dest: ~/Documents/GitHub/maxdevhd/inne/mas-classes.zip
+    - name: Remove container
+      community.docker.docker_container:
+         name: nginx-mas
+         state: absent
+    - name: Remove image
+      community.docker.docker_image:
+         state: absent
+         name: huberduda/nginx-mas
+         tag: latest
+    - name: build and push container image
+      community.docker.docker_image:
+         name: docker.io/huberduda/nginx-mas
+         build:
+           path: ~/Documents/GitHub/maxdevhd/inne
+         source: build
+         tag: latest
+         push: true
+    - name: Create a container
+      community.docker.docker_container:
+         name: nginx-mas
+         image: huberduda/nginx-mas
+         ports: 
+          - "7755:7755"
